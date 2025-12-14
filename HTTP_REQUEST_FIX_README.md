@@ -24,7 +24,9 @@ This fix is applied to:
 
 ## How to Use as External Component
 
-### Option 1: Using the Fixed Component Only
+**IMPORTANT**: Always use the branch name, not commit hashes. ESPHome's external component system may not be able to fetch specific commits from forked repositories.
+
+### Recommended Configuration
 
 Add this to your ESPHome YAML configuration:
 
@@ -33,45 +35,38 @@ external_components:
   - source:
       type: git
       url: https://github.com/pvizeli/esphome
-      ref: fix-http-request-2025.11
+      ref: fix-http-request-2025.11  # Use branch name, not commit hash
     components: [ http_request ]
-    refresh: 1d
+    refresh: 0s  # Force refresh to get latest code
 
 # Your http_request configuration
 http_request:
   useragent: esphome/device
   timeout: 10s
 
-# IMPORTANT: You must use capture_response: true for the fix to apply
-# Example usage:
+# The fix works for:
+# 1. http_request actions with capture_response: true
+# 2. update component (OTA firmware downloads)
+# 3. http_request.ota component
+
+# Example 1: Using with update component (most common use case)
+update:
+  - platform: http_request
+    name: "Firmware Update"
+    source: "http://your-server.com/firmware.bin"
+
+# Example 2: Using with capture_response
 script:
   - id: make_request
     then:
       - http_request.get:
           url: "http://example.com/api"
-          capture_response: true  # <-- Required for the fix to work!
+          capture_response: true
           on_response:
             then:
               - logger.log:
                   format: "Response: %s"
                   args: [ 'body.c_str()' ]
-```
-
-### Option 2: Using a Specific Commit (Recommended for Production)
-
-For better stability, pin to a specific commit:
-
-```yaml
-external_components:
-  - source:
-      type: git
-      url: https://github.com/pvizeli/esphome
-      ref: 59f09cca8  # Commit hash
-    components: [ http_request ]
-
-http_request:
-  useragent: esphome/device
-  timeout: 10s
 ```
 
 ## Verification
