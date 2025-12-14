@@ -17,11 +17,10 @@ Adds error handling to break out of the read loop when:
 - `read()` returns -1 (connection closed/error)
 - `read()` returns 0 (no more data available)
 
-## **IMPORTANT: Configuration Requirement**
-
-⚠️ **The fix only applies when using `capture_response: true`** in your http_request actions!
-
-The infinite loop occurs in the response reading code, which is only active when you capture the response. If you're not currently using `capture_response: true`, you need to add it to benefit from this fix.
+This fix is applied to:
+- ✅ **http_request actions with `capture_response: true`**
+- ✅ **OTA/update component** (firmware downloads and MD5 verification)
+- ✅ **http_request.ota component** (flash operations)
 
 ## How to Use as External Component
 
@@ -89,9 +88,14 @@ Once the upstream ESPHome project merges the fix and releases a new version, you
 
 ## Technical Details
 
-**Changed File**: `esphome/components/http_request/http_request.h`
-**Lines Modified**: 258-260
-**Change**: Added `if (read <= 0) { break; }` check in the response reading loop
+**Files Changed**:
+1. `esphome/components/http_request/http_request.h` (lines 258-260)
+   - Response capture loop
+2. `esphome/components/http_request/ota/ota_http_request.cpp` (lines 136, 251-253)
+   - OTA firmware download loop
+   - MD5 verification download loop
+
+**Change**: Added `if (read <= 0) { break; }` or changed `if (bufsize < 0)` to `if (bufsize <= 0)` in all read loops
 
 ## License
 
