@@ -134,13 +134,10 @@ uint8_t OtaHttpRequestComponent::do_ota_() {
     yield();
 
     // Exit loop if no data available (stream closed or end of data)
+    // Let MD5 verification catch incomplete/corrupted downloads
     if (bufsize <= 0) {
-      if (bufsize < 0) {
-        ESP_LOGE(TAG, "Stream closed with error");
-        this->cleanup_(std::move(backend), container);
-        return OTA_CONNECTION_ERROR;
-      }
-      // bufsize == 0: no more data available, exit loop
+      ESP_LOGD(TAG, "Stream ended (bufsize=%d, read %u of %u bytes)", bufsize, container->get_bytes_read(),
+               container->content_length);
       break;
     }
 
