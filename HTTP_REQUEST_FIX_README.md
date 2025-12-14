@@ -17,6 +17,12 @@ Adds error handling to break out of the read loop when:
 - `read()` returns -1 (connection closed/error)
 - `read()` returns 0 (no more data available)
 
+## **IMPORTANT: Configuration Requirement**
+
+⚠️ **The fix only applies when using `capture_response: true`** in your http_request actions!
+
+The infinite loop occurs in the response reading code, which is only active when you capture the response. If you're not currently using `capture_response: true`, you need to add it to benefit from this fix.
+
 ## How to Use as External Component
 
 ### Option 1: Using the Fixed Component Only
@@ -36,6 +42,20 @@ external_components:
 http_request:
   useragent: esphome/device
   timeout: 10s
+
+# IMPORTANT: You must use capture_response: true for the fix to apply
+# Example usage:
+script:
+  - id: make_request
+    then:
+      - http_request.get:
+          url: "http://example.com/api"
+          capture_response: true  # <-- Required for the fix to work!
+          on_response:
+            then:
+              - logger.log:
+                  format: "Response: %s"
+                  args: [ 'body.c_str()' ]
 ```
 
 ### Option 2: Using a Specific Commit (Recommended for Production)
