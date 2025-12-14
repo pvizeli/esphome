@@ -7,7 +7,6 @@
 #include "esphome/components/md5/md5.h"
 #include "esphome/components/watchdog/watchdog.h"
 #include "esphome/components/ota/ota_backend.h"
-#include "esphome/components/ota/ota_backend_arduino_esp32.h"
 #include "esphome/components/ota/ota_backend_arduino_esp8266.h"
 #include "esphome/components/ota/ota_backend_arduino_rp2040.h"
 #include "esphome/components/ota/ota_backend_esp_idf.h"
@@ -134,10 +133,13 @@ uint8_t OtaHttpRequestComponent::do_ota_() {
     yield();
 
     // Exit loop if no data available (stream closed or end of data)
-    // Let MD5 verification catch incomplete/corrupted downloads
     if (bufsize <= 0) {
-      ESP_LOGD(TAG, "Stream ended (bufsize=%d, read %u of %u bytes)", bufsize, container->get_bytes_read(),
-               container->content_length);
+      if (bufsize < 0) {
+        ESP_LOGE(TAG, "Stream closed with error");
+        this->cleanup_(std::move(backend), container);
+        return OTA_CONNECTION_ERROR;
+      }
+      // bufsize == 0: no more data available, exit loop
       break;
     }
 
