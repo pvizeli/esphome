@@ -133,7 +133,7 @@ uint8_t OtaHttpRequestComponent::do_ota_() {
     App.feed_wdt();
     yield();
 
-    if (bufsize < 0) {
+    if (bufsize <= 0) {
       ESP_LOGE(TAG, "Stream closed");
       this->cleanup_(std::move(backend), container);
       return OTA_CONNECTION_ERROR;
@@ -248,6 +248,9 @@ bool OtaHttpRequestComponent::http_get_md5_() {
   int read_len = 0;
   while (container->get_bytes_read() < MD5_SIZE) {
     read_len = container->read((uint8_t *) this->md5_expected_.data(), MD5_SIZE);
+    if (read_len <= 0) {
+      break;
+    }
     App.feed_wdt();
     yield();
   }
